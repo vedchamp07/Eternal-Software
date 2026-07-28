@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot name="mecanum_bot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ======================= -->
+  <!-- BASE LINK -->
+  <!-- box size = length(x, front-to-back) width(y) height(z) -->
+  <!-- length (x) = 0.55 -->
+  <!-- width (y) = 0.133  (from "front length" measurement) -->
+  <!-- height (z) = 0.121 -->
+  <!-- ======================= -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.55 0.133 0.121"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.55 0.133 0.121"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
+  </link>
+
+  <!-- ======================= -->
+  <!-- BASE FOOTPRINT -->
+  <!-- nav2_params.yaml uses base_footprint for AMCL and base_link for costmaps, -->
+  <!-- so both frames must exist. Ground clearance = wheel z_offset (-0.026) -->
+  <!-- - wheel radius (0.048) = base_link sits 0.074 above the ground plane. -->
+  <!-- ======================= -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.074" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ======================= -->
+  <!-- WHEEL MACRO -->
+  <!-- Mecanum wheels are still "continuous" joints here -->
+  <!-- the diagonal-roller behavior is handled in software (kinematics), not URDF -->
+  <!-- ======================= -->
+  <xacro:macro name="wheel" params="prefix x_offset y_offset">
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <geometry>
+          <cylinder radius="0.048" length="0.05227"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.048" length="0.05227"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </collision>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <origin xyz="${x_offset} ${y_offset} -0.026" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- instantiate all 4 wheels -->
+  <!-- x_offset: +-0.220 = half of 440mm wheelbase (wheel-center to wheel-center, front-rear) -->
+  <!-- y_offset: +-0.1196 = half box width (0.0665) + gap box-to-wheel (0.027) + half wheel width (0.026135) -->
+  <xacro:wheel prefix="front_left"  x_offset="0.220"  y_offset="0.1196"/>
+  <xacro:wheel prefix="front_right" x_offset="0.220"  y_offset="-0.1196"/>
+  <xacro:wheel prefix="rear_left"   x_offset="-0.220" y_offset="0.1196"/>
+  <xacro:wheel prefix="rear_right"  x_offset="-0.220" y_offset="-0.1196"/>
+
+  <!-- ======================= -->
+  <!-- LIDAR -->
+  <!-- This fixed transform is what fixes the -->
+  <!-- "Frame [laser] does not exist" error permanently -->
+  <!-- once robot_state_publisher is running -->
+  <!-- ======================= -->
+  <link name="laser_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.035" length="0.022"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!-- lidar centered on box top surface (x,y = box center) -->
+  <!-- z = box top face (0.0605) + 5mm mount base + half of lidar body height (22mm/2 = 11mm) -->
+  <!-- so the lidar body cylinder is drawn sitting on top of its base, not buried in the box -->
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_link"/>
+    <origin xyz="0.0 0.0 0.0765" rpy="0 0 0"/>
+  </joint>
+
+</robot>
