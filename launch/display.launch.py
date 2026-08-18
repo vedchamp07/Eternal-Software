@@ -10,6 +10,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     pkg_share = get_package_share_directory('my_robot_nav')
     default_xacro_path = os.path.join(pkg_share, 'urdf', 'mecanum_bot_v3.urdf.xacro')
+    rviz_config_path = os.path.join(pkg_share, 'config', 'urdf_view.rviz')
 
     xacro_path = LaunchConfiguration('xacro_path')
 
@@ -38,6 +39,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         output='screen',
+        arguments=['-d', rviz_config_path],
     )
 
     return LaunchDescription([

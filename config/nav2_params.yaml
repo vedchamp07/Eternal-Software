@@ -110,13 +110,14 @@ controller_server:
       vx_max: 0.5
       vx_min: -0.35
       vy_max: 0.5
+      vy_min: -0.5
       wz_max: 1.9
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
       temperature: 0.3
       gamma: 0.015
-      motion_model: "DiffDrive"
+      motion_model: "Omni"
       visualize: true
       regenerate_noises: true
       TrajectoryVisualizer:
@@ -196,7 +197,9 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.22
+      # rectangular footprint from mecanum_bot_v3.urdf.xacro: half-length 0.275
+      # (base box), half-width 0.146 (wheel y_offset 0.1196 + half wheel width 0.026)
+      footprint: "[[0.275, 0.146], [-0.275, 0.146], [-0.275, -0.146], [0.275, -0.146]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -234,7 +237,8 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.22
+      # rectangular footprint from mecanum_bot_v3.urdf.xacro (see local_costmap for derivation)
+      footprint: "[[0.275, 0.146], [-0.275, 0.146], [-0.275, -0.146], [0.275, -0.146]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
