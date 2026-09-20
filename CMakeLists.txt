@@ -11,8 +11,13 @@ find_package(rclcpp REQUIRED)
 find_package(nav2_msgs REQUIRED)
 
 install(
-  DIRECTORY launch config urdf maps
+  DIRECTORY launch config urdf maps worlds
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  PROGRAMS scripts/stm32_bridge.py scripts/twist_stamper.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

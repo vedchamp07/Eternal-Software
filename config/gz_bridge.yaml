@@ -1,0 +1,12 @@
+# ros_gz_bridge routes for simulation.
+# /odom + odom->base_link TF come from mecanum_drive_controller (ros2_control,
+# no bridge needed). Only the Gazebo lidar + sim clock need bridging.
+- topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+- topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS

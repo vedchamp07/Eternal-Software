@@ -6,6 +6,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -21,6 +22,7 @@ def generate_launch_description():
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
+    serial_port = LaunchConfiguration('serial_port')
 
     declare_xacro_path = DeclareLaunchArgument(
         'xacro_path',
@@ -61,7 +63,13 @@ def generate_launch_description():
         description='Automatically lifecycle-configure/activate Nav2 nodes',
     )
 
-    robot_description = Command(['xacro ', xacro_path])
+    declare_serial_port = DeclareLaunchArgument(
+        'serial_port',
+        default_value='/dev/ttyUSB1',
+        description='Serial port for RPLIDAR A1M8 (use /dev/rplidar symlink if available)',
+    )
+
+    robot_description = ParameterValue(Command(['xacro ', xacro_path]), value_type=str)
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -70,15 +78,15 @@ def generate_launch_description():
         parameters=[{'robot_description': robot_description, 'use_sim_time': use_sim_time}],
     )
 
-    # RPLIDAR A1, wired via USB-serial (CP210x) directly to the onboard computer.
+    # RPLIDAR A1M8, 115200 baud, wired via USB-serial (CP210x).
     # NOTE: this RPi has shown undervoltage + USB timeout errors powering the
     # lidar directly off its own USB port - route it through a powered hub
     # before trusting this for real runs.
-    # NOTE: serial_port is hardcoded to /dev/ttyUSB1, confirmed by testing
-    # (S/N 9754FA89C7E19EC8BCE499F01C835670). /dev/ttyUSB0 is a different
-    # device (likely the ESP32, same generic CP2102 chip). USB enumeration
-    # order isn't guaranteed across reboots - if the lidar stops responding,
-    # check which ttyUSBx it actually landed on before assuming it's broken.
+    # Default /dev/ttyUSB1 was confirmed by testing (lidar S/N
+    # 9754FA89C7E19EC8BCE499F01C835670); /dev/ttyUSB0 is a different device
+    # (STM32/motor controller, same generic CP210x chip). USB enumeration
+    # order isn't guaranteed across reboots - override with
+    # serial_port:=/dev/ttyUSBx (or a /dev/rplidar udev symlink).
     # rplidar_ros's own launch file hardcodes /dev/ttyUSB0 with no declared
     # launch arguments, so the node is defined directly here instead of
     # included, to actually override the port.
@@ -88,17 +96,17 @@ def generate_launch_description():
         name='rplidar_composition',
         output='screen',
         parameters=[{
-            'serial_port': '/dev/ttyUSB1',
+            'serial_port': serial_port,
             'serial_baudrate': 115200,
-            'frame_id': 'laser',
+            'frame_id': 'laser_link',
             'inverted': False,
             'angle_compensate': True,
         }],
     )
 
     # NOTE: no odometry source is included here yet. odom -> base_link TF and
-    # /odom must come from the ESP32 motor controller firmware (still in
-    # progress) before this stack can actually navigate, not just plan on paper.
+    # /odom must come from the STM32 motor controller bridge (to be written)
+    # before this stack can actually navigate, not just plan on paper.
     nav2_bringup_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')
@@ -119,6 +127,7 @@ def generate_launch_description():
         declare_map,
         declare_use_sim_time,
         declare_autostart,
+        declare_serial_port,
         robot_state_publisher_node,
         rplidar_node,
         nav2_bringup_launch,

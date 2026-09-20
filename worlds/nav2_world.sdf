@@ -1,0 +1,124 @@
+<?xml version="1.0" ?>
+<!-- Simple walled test room for Nav2 SLAM: 14x14m with pillars/boxes
+     so the lidar always sees features. -->
+<sdf version="1.8">
+  <world name="nav2_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <!-- required for the lidar sensor in the robot URDF -->
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>30 30 0.1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>30 30 0.1</size></box></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- perimeter walls: 14x14m room, 1.5m high -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 7 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>14.4 0.2 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>14.4 0.2 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -7 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>14.4 0.2 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>14.4 0.2 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_east">
+      <static>true</static>
+      <pose>7 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.2 14.4 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.2 14.4 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-7 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.2 14.4 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.2 14.4 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <!-- inner obstacles: pillars + boxes as SLAM features -->
+    <model name="pillar_1">
+      <static>true</static>
+      <pose>3 3 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.6 0.6 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.6 0.6 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="pillar_2">
+      <static>true</static>
+      <pose>-3 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.6 0.6 1.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.6 0.6 1.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="box_1">
+      <static>true</static>
+      <pose>-3 3 0.5 0 0 0.5</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="box_2">
+      <static>true</static>
+      <pose>3 -3 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>1.5 0.8 0.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>1.5 0.8 0.5</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="divider">
+      <static>true</static>
+      <pose>0 0.5 0.6 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>4.0 0.2 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>4.0 0.2 1.2</size></box></geometry></visual>
+      </link>
+    </model>
+  </world>
+</sdf>

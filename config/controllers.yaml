@@ -1,0 +1,62 @@
+# ros2_control config for Gazebo simulation.
+# Loaded by the gz_ros2_control plugin in urdf/mecanum_bot_v3.urdf.xacro.
+# Same controller type will be reused on real hardware once the STM32
+# Modbus ros2_control hardware_interface exists (sim-to-real parity).
+controller_manager:
+  ros__parameters:
+    update_rate: 50  # Hz
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    mecanum_drive_controller:
+      type: mecanum_drive_controller/MecanumDriveController
+
+mecanum_drive_controller:
+  ros__parameters:
+    # Stop the robot if no cmd_vel for >1s.
+    # NOTE: 4.42 only accepts TwistStamped on ~/reference, so sim.launch.py
+    # runs scripts/twist_stamper.py (Twist /cmd_vel -> TwistStamped
+    # /cmd_vel_stamped) instead of relying on use_stamped_vel.
+    reference_timeout: 1.0
+
+    front_left_wheel_command_joint_name: "front_left_wheel_joint"
+    front_right_wheel_command_joint_name: "front_right_wheel_joint"
+    rear_left_wheel_command_joint_name: "rear_left_wheel_joint"
+    rear_right_wheel_command_joint_name: "rear_right_wheel_joint"
+
+    kinematics:
+      base_frame_offset: {x: 0.0, y: 0.0, theta: 0.0}
+      # wheel radius 0.048m (URDF); Lx+Ly = 0.220 + 0.1196 (matches
+      # stm32_bridge.py lx/ly and the mecanum FK wz denominator)
+      wheels_radius: 0.048
+      sum_of_robot_center_projection_on_X_Y_axis: 0.3396
+
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    # Publishes odom -> base_link TF directly (Nav2 needs this)
+    enable_odom_tf: true
+    # ~/odom remapped to /odom in URDF
+    pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # Keep in sync with nav2_params.yaml MPPI limits (vx [-0.35, 0.5],
+    # vy [-0.5, 0.5], wz [-1.9, 1.9])
+    linear:
+      x:
+        max_velocity: 0.5
+        min_velocity: -0.35
+        max_acceleration: 2.5
+        min_acceleration: -2.5
+      y:
+        max_velocity: 0.5
+        min_velocity: -0.5
+        max_acceleration: 2.5
+        min_acceleration: -2.5
+    angular:
+      z:
+        max_velocity: 1.9
+        min_velocity: -1.9
+        max_acceleration: 3.2
+        min_acceleration: -3.2
