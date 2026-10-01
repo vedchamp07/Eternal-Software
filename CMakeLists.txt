@@ -16,7 +16,7 @@ install(
 )
 
 install(
-  PROGRAMS scripts/stm32_bridge.py scripts/twist_stamper.py
+  PROGRAMS scripts/stm32_bridge.py scripts/twist_stamper.py scripts/avatar_bridge.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

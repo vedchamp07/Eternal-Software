@@ -23,6 +23,9 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     serial_port = LaunchConfiguration('serial_port')
+    use_bridge = LaunchConfiguration('bridge')
+    stm32_port = LaunchConfiguration('stm32_port')
+    state_live = LaunchConfiguration('state_live')
 
     declare_xacro_path = DeclareLaunchArgument(
         'xacro_path',
@@ -69,6 +72,24 @@ def generate_launch_description():
         description='Serial port for RPLIDAR A1M8 (use /dev/rplidar symlink if available)',
     )
 
+    declare_bridge = DeclareLaunchArgument(
+        'bridge',
+        default_value='True',
+        description='Run avatar_bridge (AVATAR cmd_vel->STM32 + open-loop /odom)',
+    )
+
+    declare_stm32_port = DeclareLaunchArgument(
+        'stm32_port',
+        default_value='/dev/ttyACM0',
+        description='Serial port for STM32 Blue Pill (AVATAR CDC)',
+    )
+
+    declare_state_live = DeclareLaunchArgument(
+        'state_live',
+        default_value='False',
+        description='STATE=True lets the STM32 drive wheels. Keep False until wheels-on-blocks test.',
+    )
+
     robot_description = ParameterValue(Command(['xacro ', xacro_path]), value_type=str)
 
     robot_state_publisher_node = Node(
@@ -107,6 +128,33 @@ def generate_launch_description():
     # NOTE: no odometry source is included here yet. odom -> base_link TF and
     # /odom must come from the STM32 motor controller bridge (to be written)
     # before this stack can actually navigate, not just plan on paper.
+    # AVATAR bridge for stm32_avatar_mecanum_speed.ino (BOARD_ID=1).
+    # Publishes open-loop /odom + odom->base_footprint TF from commanded
+    # velocity (drifts: no encoders). STATE defaults False so the MCU holds
+    # zero even with valid packets; set state_live:=True only on blocks.
+    from launch.conditions import IfCondition
+    avatar_bridge_node = Node(
+        package='my_robot_nav',
+        executable='avatar_bridge.py',
+        name='avatar_bridge',
+        output='screen',
+        condition=IfCondition(use_bridge),
+        parameters=[{
+            'port': stm32_port,
+            'baud': 115200,
+            'board_id': 1,
+            'use_discover': False,
+            'max_linear': 0.5,
+            'max_angular': 1.9,
+            'cmd_rate': 20.0,
+            'cmd_timeout': 0.5,
+            'state_live': state_live,
+            'odom_frame': 'odom',
+            'base_frame': 'base_footprint',
+            'use_sim_time': use_sim_time,
+        }],
+    )
+
     nav2_bringup_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')
@@ -128,7 +176,11 @@ def generate_launch_description():
         declare_use_sim_time,
         declare_autostart,
         declare_serial_port,
+        declare_bridge,
+        declare_stm32_port,
+        declare_state_live,
         robot_state_publisher_node,
         rplidar_node,
+        avatar_bridge_node,
         nav2_bringup_launch,
     ])
